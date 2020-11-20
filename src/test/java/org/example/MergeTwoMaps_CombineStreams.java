@@ -11,8 +11,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class MergeTwoMaps extends TestCase {
-    private static Logger LOGGER = Logger.getLogger(PotusTest.class.getName());
+public class MergeTwoMaps_CombineStreams extends TestCase {
+    private static Logger LOGGER = Logger.getLogger(SimpleStreamExamples.class.getName());
     private static final String REPUBLICAN = "Republican";
     private static final String DEMOCRATIC = "Democratic";
     private static Map<String, Potus> map1 = new HashMap<>();

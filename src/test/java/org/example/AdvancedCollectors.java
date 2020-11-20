@@ -6,8 +6,8 @@ import org.apache.log4j.Logger;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class AdvancedCollect extends TestCase {
-    private static Logger LOGGER = Logger.getLogger(AdvancedCollect.class.getName());
+public class AdvancedCollectors extends TestCase {
+    private static Logger LOGGER = Logger.getLogger(AdvancedCollectors.class.getName());
 
     private static final String REPUBLICAN = "Republican";
     private static final String DEMOCRATIC = "Democratic";

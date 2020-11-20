@@ -18,7 +18,7 @@ import java.util.stream.Stream;
  * The flatMap operation takes a function that conceptually wants to consume one value and produce an arbitrary number of values.
  */
 public class MapVSFlatMap extends TestCase {
-    private static Logger LOGGER = Logger.getLogger(PotusTest.class.getName());
+    private static Logger LOGGER = Logger.getLogger(SimpleStreamExamples.class.getName());
     private static final String REPUBLICAN = "Republican";
     private static final String DEMOCRATIC = "Democratic";
 
@@ -113,7 +113,7 @@ public class MapVSFlatMap extends TestCase {
     }
 
     @Test
-    public void test_flatmap_list_of_lists(){
+    public void test_flatmap_list_of_lists() {
 
         List<List<String>> namesNested = Arrays.asList(
                 Arrays.asList("Jeff", "Bezos"),
@@ -128,5 +128,4 @@ public class MapVSFlatMap extends TestCase {
         names = namesNested.stream().flatMap(Collection::stream).collect(Collectors.toList());
         names.forEach(LOGGER::debug);
     }
-
 }
