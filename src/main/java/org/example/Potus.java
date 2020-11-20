@@ -10,6 +10,10 @@ public class Potus {
     private String party;
     private List<Wife> wives;
 
+    public Potus() {
+
+    }
+
     public Potus(String firstName, String lastName, int electionYear, String party, List<Wife> wives) {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -60,5 +64,16 @@ public class Potus {
 
     public void setWives(List<Wife> wives) {
         this.wives = wives;
+    }
+
+    @Override
+    public String toString() {
+        return "Potus{" +
+                "firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", electionYear=" + electionYear +
+                ", party='" + party + '\'' +
+                ", wives=" + wives +
+                '}';
     }
 }

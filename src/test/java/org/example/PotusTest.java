@@ -5,6 +5,9 @@ import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,6 +38,50 @@ public class PotusTest extends TestCase {
             new Potus("Jimmy", "Carter", 1976, DEMOCRATIC));
 
 
+    @Test
+    public void test_foreach() {
+        // foreach is terminal operation, calling the supplied function on each element.\
+        List<Potus> potuseslocal = new ArrayList<>(potuses);
+        potuseslocal.stream().forEach(potus -> potus.setFirstName(potus.getFirstName() + "changed"));
+        potuseslocal.forEach(LOGGER::debug);
+
+        LOGGER.debug("Start wiht B letter ===============");
+        List<Potus> list = new ArrayList<>();
+        potuseslocal.stream().forEach(potus -> {
+            if (potus.getFirstName().startsWith("B")) {
+                list.add(potus);
+            }
+        });
+        list.forEach(LOGGER::debug);
+
+        LOGGER.debug("Correct implementation");
+        List<Potus> list2 = new ArrayList<>();
+        list2 = potuseslocal.stream().filter(potus -> potus.getFirstName().startsWith("B")).collect(Collectors.toList());
+        list2.forEach(LOGGER::debug);
+    }
+
+
+    @Test
+    public void test_foreach_VS_peek() {
+        List<Potus> potusToTestForeach = new ArrayList<>(potuses);
+        // foreach is terminal operation, calling the supplied function on each element.
+        potusToTestForeach.stream().forEach(potus -> potus.setFirstName(potus.getFirstName() + "changed"));
+        LOGGER.debug("original list after foreach");
+        potusToTestForeach.forEach(LOGGER::debug);
+        // RESULT potusToTestForeach objects were really changed in the original list
+
+        // PEEK it performs the specified operation on each element of the stream and returns a new stream which can be used further. peek() is an intermediate operation:
+        // This method exists mainly to support debugging, where you want to see the elements as they flow past a certain point in a pipeline
+        //can be useful in another scenario: when we want to alter the inner state of an element
+        List<Potus> potusToTestPeek = new ArrayList<>(potuses);
+        List<Potus> potusPeekResult = potusToTestPeek.stream()
+                .peek(potus -> potus.setFirstName(potus.getFirstName() + "peek")) // not terminate operation
+                .filter(potus -> potus.getFirstName().startsWith("B")) // can do smth more
+                .collect(Collectors.toList()); // terminate action
+
+        LOGGER.debug("peek result");
+        potusPeekResult.forEach(LOGGER::debug);
+    }
 
     @Test
     public void test_filter_map_distinct_limit_collect() {
@@ -47,38 +94,68 @@ public class PotusTest extends TestCase {
     }
 
     @Test
-    public void test_flatmap() {
-        //The difference is that the map operation produces one output value for each input value, whereas the flatMap operation produces an arbitrary number (zero or more) values for each input value.
-        Potus trump = potuses.get(0);
-        List<List<Child>> kidsViaMap = trump.getWives().stream().map(wife -> wife.getChildren()).collect(Collectors.toList()); // not convenient list of lists
+    public void test_sort() {
+        List<Child> children = trumpWifes.stream().flatMap(wife -> wife.getChildren().stream()).sorted(Comparator.comparing(Child::getAge).reversed()).collect(Collectors.toList());
+        children.forEach(LOGGER::debug);
+    }
 
-        List<Child> kidsViaLoop = new ArrayList<>();
-        trump.getWives().forEach(w -> kidsViaLoop.addAll(w.getChildren())); // working example but we need one more loop to store data
+    @Test
+    public void test_list_to_map() {
+        Map<Integer, Child> ageToChild = trumpWifes.stream() // stream of wives
+                .flatMap(wife -> wife.getChildren().stream()) // stream of children
+                .collect(Collectors.toMap(Child::getAge, Function.identity())); // Function.identity() - puts the child object as a value
 
-        List<Child> kidsViaFlatMap = trump.getWives().stream().flatMap(wife -> wife.getChildren().stream()).collect(Collectors.toList()); // good solution
-
-
-        // one more flat map example
-        List<Integer> integers = Arrays.asList(6, 12, 18);
-        List<Integer> flatted = integers.stream().flatMap(i -> Stream.of(i / 2, i / 3)).collect(Collectors.toList());
-        flatted.forEach(LOGGER::debug);
-
-//        Map<String, List<Child>> presidentChild = potuses.stream().distinct()
-//                .collect(Collectors.
-//                        toMap(Potus::getFirstName, potus -> potus.getWives().stream().flatMap(wife -> wife.getChildren().stream()).collect(Collectors.toList())));
-
-        Map<String, List<String>> presidentChild = potuses.stream().distinct()
-                .collect(Collectors.
-                        toMap(Potus::getFirstName, potus -> potus.getWives().stream().flatMap(wife -> wife.getChildren().stream().map(child -> child.getName())).collect(Collectors.toList())));
-
-        presidentChild.forEach((key, value) -> {
+        ageToChild.forEach((key, value) -> {
             LOGGER.debug(key + " " + value);
         });
-
-        // presidentChild.
-
-
     }
 
 
+    @Test
+    public void test_find_first_matching() {
+        Predicate<Wife> predicate = wife -> wife.getChildren().size() > 2;
+        Optional<Wife> wife = trumpWifes.stream().filter(predicate).findFirst();
+        LOGGER.debug(wife);
+
+        boolean isAllWivesHaveMoreThan2Children = trumpWifes.stream().allMatch(predicate);
+        LOGGER.debug("All wives have more that 2 children =>" + isAllWivesHaveMoreThan2Children);
+
+        boolean isAtLeastOneWifeWithMoreThan2Children = trumpWifes.stream().anyMatch(predicate);
+        LOGGER.debug("At least one wife has more that 2 children =>" + isAtLeastOneWifeWithMoreThan2Children);
+    }
+
+    //reduction stream operations allow us to produce one single result from a sequence of elements, by applying repeatedly a combining operation to the elements in the sequence.
+    // A reduction operation (also called as fold) takes a sequence of input elements and combines them into a single summary result by repeated application of a combining operation
+    @Test
+    public void test_reduce() {
+        int totalNumberOfChildren = trumpWifes.stream()
+                .mapToInt(w1 -> w1.getChildren().size()) // int stream
+                .reduce(0, (sum, i) -> sum + i); // sum all children
+        LOGGER.debug(totalNumberOfChildren);
+    }
+
+    public void test_my_reduce() {
+
+        BinaryOperator<Potus> binaryOperator = (p1, p2)
+                -> p1.getElectionYear() < p2.getElectionYear() ? p1 : p2;
+
+        Optional<Potus> potus = potuses.stream().reduce(binaryOperator);
+        LOGGER.debug(potus.get());
+
+        // the same action via sort
+        Optional<Potus> potus1 = potuses.stream().sorted((p1, p2) -> p1.getElectionYear() < p2.getElectionYear() ? -1 : 1).findFirst();
+        LOGGER.debug(potus1.get());
+    }
+
+    private class Sum {
+        private int sumValue;
+
+        public int getSumValue() {
+            return sumValue;
+        }
+
+        public void setSumValue(int sumValue) {
+            this.sumValue = sumValue;
+        }
+    }
 }

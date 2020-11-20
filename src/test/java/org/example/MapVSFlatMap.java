@@ -4,10 +4,7 @@ import junit.framework.TestCase;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -57,9 +54,21 @@ public class MapVSFlatMap extends TestCase {
     @Test
     // device each value for 2
     public void testSimpleMap() {
+        //map() produces a new stream after applying a function to each element of the original stream
         List<Integer> integers = Arrays.asList(6, 12, 18);
         List<Integer> devidedIntegers = integers.stream().map(i -> i / 2).collect(Collectors.toList());
         devidedIntegers.forEach(LOGGER::debug);
+
+
+        // convert strean of ids to list of potuses
+        Integer[] potusIds = {1, 2, 3};
+        List<Potus> potuses = Stream.of(potusIds)
+                .map(this::getPotusById)
+                .collect(Collectors.toList());
+    }
+
+    private Potus getPotusById(int id) {
+        return new Potus();
     }
 
     @Test
@@ -89,17 +98,35 @@ public class MapVSFlatMap extends TestCase {
 
         LOGGER.debug("president name -> child names==============================");
         Map<String, List<String>> presidentChildName = potuses.stream().distinct()
-                .collect(Collectors.
-                        toMap(
-                                Potus::getFirstName,
+                .collect(
+                        Collectors.toMap(
+                                Potus::getFirstName, // map key
+                                // map value
                                 potus -> potus.getWives().stream() // stream of wives
-                                        .flatMap(wife -> wife.getChildren().stream().map(child -> child.getName())).collect(Collectors.toList())));
+                                        .flatMap(wife -> wife.getChildren().stream())//stream of children
+                                        .map(child -> child.getName()) // stream of names
+                                        .collect(Collectors.toList()))); // collect names to list
 
         presidentChildName.forEach((key, value) -> {
             LOGGER.debug(key + " " + value);
         });
+    }
+
+    @Test
+    public void test_flatmap_list_of_lists(){
+
+        List<List<String>> namesNested = Arrays.asList(
+                Arrays.asList("Jeff", "Bezos"),
+                Arrays.asList("Bill", "Gates"),
+                Arrays.asList("Mark", "Zuckerberg"));
 
 
+        List<String> names = namesNested.stream().flatMap(list -> list.stream()).collect(Collectors.toList());
+        names.forEach(LOGGER::debug);
+        LOGGER.debug("=========================");
+        // the same as 1 line above
+        names = namesNested.stream().flatMap(Collection::stream).collect(Collectors.toList());
+        names.forEach(LOGGER::debug);
     }
 
 }
